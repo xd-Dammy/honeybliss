@@ -1,0 +1,74 @@
+[
+ {
+  "id": "f0",
+  "name": "Royal Elegance",
+  "section": "featured",
+  "file": "seed-f0.jpg"
+ },
+ {
+  "id": "f1",
+  "name": "Golden Grace",
+  "section": "featured",
+  "file": "seed-f1.jpg"
+ },
+ {
+  "id": "f2",
+  "name": "Classic Beauty",
+  "section": "featured",
+  "file": "seed-f2.jpg"
+ },
+ {
+  "id": "f3",
+  "name": "Luxury Bloom",
+  "section": "featured",
+  "file": "seed-f3.jpg"
+ },
+ {
+  "id": "f4",
+  "name": "Bliss Signature",
+  "section": "featured",
+  "file": "seed-f4.jpg"
+ },
+ {
+  "id": "f5",
+  "name": "Magenta Luxe",
+  "section": "featured",
+  "file": "seed-f5.jpg"
+ },
+ {
+  "id": "g0",
+  "name": "Gallery showcase",
+  "section": "gallery",
+  "file": "seed-g0.jpg"
+ },
+ {
+  "id": "g1",
+  "name": "Gallery showcase",
+  "section": "gallery",
+  "file": "seed-g1.jpg"
+ },
+ {
+  "id": "g2",
+  "name": "Gallery showcase",
+  "section": "gallery",
+  "file": "seed-g2.jpg"
+ },
+ {
+  "id": "g3",
+  "name": "Gallery showcase",
+  "section": "gallery",
+  "file": "seed-g3.jpg"
+ },
+ {
+  "id": "g4",
+  "name": "Gallery showcase",
+  "section": "gallery",
+  "file": "seed-g4.jpg"
+ },
+ {
+  "id": "g5",
+  "name": "Gallery showcase",
+  "section": "gallery",
+  "file": "seed-g5.jpg"
+ }
+]
