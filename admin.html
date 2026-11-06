@@ -1,0 +1,62 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex">
+<title>HoneyBliss Admin</title>
+<style>
+body{font-family:Arial,sans-serif;background:#FFF8F0;margin:0;color:#333}.w{max-width:820px;margin:0 auto;padding:20px}
+h1{font-size:1.6rem;margin:0}.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.card{background:#fff;border-radius:14px;padding:18px;margin-bottom:16px;box-shadow:0 6px 20px rgba(0,0,0,.06)}
+input[type=text],input[type=password],select{padding:11px;border:1px solid #ccc;border-radius:8px;font-size:1rem;width:100%;box-sizing:border-box;margin:6px 0}
+button{background:linear-gradient(135deg,#D4AF37,#C21884);color:#fff;border:0;border-radius:8px;padding:11px 18px;font-size:1rem;cursor:pointer}
+button.g{background:#e5e5e5;color:#333}button.r{background:#b3261e}button:disabled{opacity:.5}
+#msg{background:#fff3cd;border-left:4px solid #D4AF37;padding:10px;margin-bottom:14px;border-radius:6px;display:none}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;border-bottom:1px solid #eee;padding:10px 0}
+.row img{width:70px;height:70px;object-fit:cover;border-radius:8px}.row input[type=text]{flex:1;min-width:140px;margin:0}.row select{width:auto;margin:0}
+.hide{display:none}
+</style></head><body><div class="w">
+<div id="login" class="card" style="max-width:420px;margin:50px auto"><h1>Admin login</h1>
+<p>Paste your access key (the long code you were given). You only do this once on each device.</p>
+<input type="password" id="tok" placeholder="Access key"><button id="go">Log in</button></div>
+<div id="app" class="hide">
+<div class="top"><h1>Manage hats</h1><div><a href="index.html" target="_blank">View website</a> &nbsp;<button class="g" id="out">Log out</button></div></div>
+<div id="msg"></div>
+<div class="card"><b>Add new hat photo(s)</b>
+<input type="file" id="files" accept="image/*" multiple>
+<input type="text" id="name" placeholder="Hat name (e.g. Golden Grace)">
+<select id="sec"><option value="featured">Show in: Featured Hats (with Inquire button)</option><option value="gallery">Show in: Fashion Gallery</option></select>
+<button id="add">Upload &amp; publish</button></div>
+<div class="card"><b>Current hats</b><div id="list"></div></div>
+</div></div>
+<script src="config.js"></script>
+<script>
+var KEY='hb_key',token=localStorage.getItem(KEY)||'',hats=[],sha=null,$=function(i){return document.getElementById(i)};
+function say(t){var m=$('msg');m.textContent=t;m.style.display=t?'block':'none'}
+function enc(s){return btoa(unescape(encodeURIComponent(s)))}
+function dec(b){return decodeURIComponent(escape(atob(b.replace(/\n/g,''))))}
+async function gh(method,path,body){
+  var u='https://api.github.com/repos/'+REPO+'/contents/'+path+(method==='GET'?'?ref='+BRANCH+'&t='+Date.now():'');
+  var r=await fetch(u,{method:method,headers:{Authorization:'Bearer '+token,Accept:'application/vnd.github+json'},body:body?JSON.stringify(Object.assign({branch:BRANCH},body)):undefined});
+  if(!r.ok){var e=new Error('HTTP '+r.status);e.status=r.status;throw e}return r.json()}
+function fail(e){say(e.status===401||e.status===403?'Your access key was not accepted or has expired. Log out and paste a new key.':e.status===409||e.status===422?'The list changed elsewhere. Please refresh the page and try again.':'Something went wrong ('+e.message+'). Check your internet and try again.')}
+async function load(){var j=await gh('GET','data/hats.json');hats=JSON.parse(dec(j.content));sha=j.sha;list()}
+async function saveJson(m){var r=await gh('PUT','data/hats.json',{message:m,content:enc(JSON.stringify(hats,null,1)),sha:sha});sha=r.content.sha;list()}
+function shrink(f){return new Promise(function(res,rej){var im=new Image(),u=URL.createObjectURL(f);im.onload=function(){var s=Math.min(1,1400/Math.max(im.width,im.height)),c=document.createElement('canvas');c.width=im.width*s;c.height=im.height*s;var x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);x.drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',.85).split(',')[1])};im.onerror=rej;im.src=u})}
+function list(){var L=$('list');L.innerHTML='';hats.forEach(function(x,i){
+  var r=document.createElement('div');r.className='row';
+  var im=new Image();im.src='uploads/'+x.file;var n=document.createElement('input');n.type='text';n.value=x.name;
+  var s=document.createElement('select');[['featured','Featured'],['gallery','Gallery']].forEach(function(o){var p=document.createElement('option');p.value=o[0];p.textContent=o[1];s.appendChild(p)});s.value=x.section;
+  var sv=document.createElement('button');sv.textContent='Save';sv.onclick=async function(){say('Saving…');try{hats[i].name=n.value.trim()||x.name;hats[i].section=s.value;await saveJson('Update hat');say('Saved. It appears on the website in about a minute.')}catch(e){fail(e)}};
+  var d=document.createElement('button');d.textContent='Delete';d.className='r';d.onclick=async function(){if(!confirm('Delete this photo?'))return;say('Deleting…');
+    try{try{var f=await gh('GET','uploads/'+x.file);await gh('DELETE','uploads/'+x.file,{message:'Delete photo',sha:f.sha})}catch(e){}
+      hats.splice(i,1);await saveJson('Delete hat');say('Deleted. It disappears from the website in about a minute.')}catch(e){fail(e)}};
+  r.append(im,n,s,sv,d);L.appendChild(r)})}
+$('add').onclick=async function(){var fs=$('files').files;if(!fs.length){say('Choose at least one photo first.');return}
+  var b=$('add');b.disabled=true;var nm=$('name').value.trim();
+  try{for(var k=0;k<fs.length;k++){say('Uploading photo '+(k+1)+' of '+fs.length+'…');var fn=Date.now()+'-'+k+'.jpg';
+      await gh('PUT','uploads/'+fn,{message:'Add photo',content:await shrink(fs[k])});
+      hats.unshift({id:fn,name:nm||(fs.length>1?'Hat '+(k+1):'New hat'),section:$('sec').value,file:fn})}
+    await saveJson('Add hats');$('files').value='';$('name').value='';say('Done! Your new hat(s) will appear on the website in about a minute.')}
+  catch(e){fail(e)}b.disabled=false};
+async function start(){$('login').classList.add('hide');$('app').classList.remove('hide');say('Loading…');try{await load();say('')}catch(e){fail(e);if(e.status===401)$('out').click()}}
+$('go').onclick=function(){token=$('tok').value.trim();if(token){localStorage.setItem(KEY,token);start()}};
+$('out').onclick=function(){localStorage.removeItem(KEY);token='';$('app').classList.add('hide');$('login').classList.remove('hide')};
+if(token)start();
+</script></body></html>
